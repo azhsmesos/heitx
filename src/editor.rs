@@ -80,7 +80,10 @@ impl Editor {
         let press = Terminal::read_key()?;
         match press {
             Key::Ctrl('c') => self.should_quit = true,
-            Key::Char(c) => self.document.insert(&self.cursor_position, c),
+            Key::Char(c) => {
+                self.document.insert(&self.cursor_position, c);
+                self.move_cursor(Key::Right);
+            },
             Key::Up
             | Key::Down
             | Key::Left
