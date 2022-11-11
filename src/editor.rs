@@ -1,4 +1,4 @@
-
+use std::env;
 use crate::{Document, Row, Terminal};
 use termion::event::Key;
 
@@ -33,11 +33,18 @@ impl Editor {
     }
 
     pub fn default() -> Self {
+        let args: Vec<String> = env::args().collect();
+        let document = if args.len() > 1 {
+            let filename = &args[1];
+            Document::open(&filename).unwrap_or_default()
+        } else {
+            Document::default()
+        };
         Self {
             should_quit: false,
             terminal: Terminal::default().expect("failed to initialize heitx terminal"),
             cursor_position: Position::default(),
-            document: Document::open(),
+            document,
         }
     }
 
@@ -78,7 +85,7 @@ impl Editor {
             Terminal::clear_current_line();
             if let Some(row) = self.document.row(terminal_row as usize) {
                 self.draw_row(row);
-            } else if terminal_row == height / 3 {
+            } else if self.document.is_empty() && terminal_row == height / 3 {
                 self.draw_welcome_info();
             } else {
                 println!("~\r");
