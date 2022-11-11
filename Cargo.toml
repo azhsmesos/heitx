@@ -8,3 +8,5 @@ edition = "2021"
 
 [dependencies]
 termion = "1"
+# set grapheme
+unicode-segmentation = "1"

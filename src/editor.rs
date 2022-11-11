@@ -123,6 +123,7 @@ impl Editor {
                     y = y.saturating_add(1);
                 }
             },
+            // moving left at the start of a line
             Key::Left => {
                 if x > 0 {
                     x -= 1;
@@ -135,6 +136,7 @@ impl Editor {
                     }
                 }
             },
+            // moving right at the end of a line
             Key::Right => {
                 if x < width {
                     x += 1;
@@ -143,6 +145,7 @@ impl Editor {
                     x = 0;
                 }
             },
+            // scrolling with pageUp and pageDown
             Key::PageUp => {
                 y = if y > terminal_height {
                     y - terminal_height
