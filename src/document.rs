@@ -1,4 +1,4 @@
-use crate::Row;
+use crate::{Position, Row};
 use std::fs;
 
 #[derive(Default)]
@@ -30,5 +30,16 @@ impl Document {
 
     pub fn len(&self) -> usize {
         self.rows.len()
+    }
+
+    pub fn insert(&mut self, position: &Position, c: char) {
+        if position.y == self.len() {
+            let mut row = Row::default();
+            row.insert(0, c);
+            self.rows.push(row);
+        } else if position.y < self.len() {
+            let row = self.rows.get_mut(position.y).unwrap();
+            row.insert(position.x, c);
+        }
     }
 }

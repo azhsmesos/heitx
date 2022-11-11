@@ -1,6 +1,7 @@
 use std::cmp;
 use unicode_segmentation::UnicodeSegmentation;
 
+#[derive(Default)]
 pub struct Row {
     string: String,
     len: usize,
@@ -45,5 +46,18 @@ impl Row {
 
     fn update_len(&mut self) {
         self.len = self.string[..].graphemes(true).count();
+    }
+
+    pub fn insert(&mut self, pos: usize, c: char) {
+        if pos >= self.len {
+            self.string.push(c);
+        } else {
+            let mut res: String = self.string[..].graphemes(true).take(pos).collect();
+            let remainder: String = self.string[..].graphemes(true).skip(pos).collect();
+            res.push(c);
+            res.push_str(&remainder);
+            self.string = res;
+        }
+        self.update_len();
     }
 }
