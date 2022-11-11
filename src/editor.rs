@@ -53,7 +53,7 @@ impl Editor {
 
     pub fn default() -> Self {
         let args: Vec<String> = env::args().collect();
-        let mut initial_status = String::from("HELP: Ctrl-c = quit");
+        let mut initial_status = String::from("HELP: Ctrl-c = quit | Ctrl-s = save");
         let document = if args.len() > 1 {
             let filename = &args[1];
             let doc = Document::open(&filename);
@@ -80,6 +80,13 @@ impl Editor {
         let press = Terminal::read_key()?;
         match press {
             Key::Ctrl('c') => self.should_quit = true,
+            Key::Ctrl('s') => {
+                if self.document.save_to_disk().is_ok() {
+                    self.status_message = StatusMessage::from("file saved successfully.".to_string());
+                } else {
+                    self.status_message = StatusMessage::from("Error writing file!".to_string());
+                }
+            },
             Key::Char(c) => {
                 self.document.insert(&self.cursor_position, c);
                 self.move_cursor(Key::Right);
