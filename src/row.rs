@@ -72,4 +72,17 @@ impl Row {
         }
         self.update_len();
     }
+
+    pub fn append(&mut self, new: &Self) {
+        self.string = format!("{}{}", self.string, new.string);
+        self.update_len();
+    }
+
+    pub fn split(&mut self, pos: usize) -> Self {
+        let begin: String = self.string[..].graphemes(true).take(pos).collect();
+        let remainder: String = self.string[..].graphemes(true).skip(pos).collect();
+        self.string = begin;
+        self.update_len();
+        Self::from(&remainder[..])
+    }
 }

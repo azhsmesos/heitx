@@ -34,6 +34,10 @@ impl Document {
 
     // simple insert
     pub fn insert(&mut self, position: &Position, c: char) {
+        if c == '\n' {
+            self.insert_newline(position);
+            return;
+        }
         if position.y == self.len() {
             let mut row = Row::default();
             row.insert(0, c);
@@ -49,7 +53,33 @@ impl Document {
         if pos.y >= self.len() {
             return;
         }
-        let row = self.rows.get_mut(pos.y).unwrap();
-        row.delete(pos.x);
+        /*
+            What it does is check if we are at the end of a line,
+            and if there is a line after that line. If this is the case,
+            we remove the next line of vec from our and append it to the
+            current line. If this is not the case, we simply t
+            ry to delete from the current row.
+         */
+        if pos.x == self.rows.get_mut(pos.y).unwrap().len() && pos.y < self.len() - 1 {
+            let next_row = self.rows.remove(pos.y + 1);
+            let row = self.rows.get_mut(pos.y).unwrap();
+            row.append(&next_row);
+        } else {
+            let row = self.rows.get_mut(pos.y).unwrap();
+            row.delete(pos.x);
+        }
+    }
+
+    fn insert_newline(&mut self, pos: &Position) {
+        if pos.y > self.len() {
+            return;
+        }
+        if pos.y == self.len() {
+            self.rows.push(Row::default());
+            return;
+        }
+
+        let new_row = self.rows.get_mut(pos.y).unwrap().split(pos.x);
+        self.rows.insert(pos.y + 1, new_row);
     }
 }
