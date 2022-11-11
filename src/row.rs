@@ -26,17 +26,21 @@ impl Row {
             .graphemes(true)
             .skip(start)
             .take(end - start) {
-            res.push_str(grapheme);
+            if grapheme == "\t" {
+                res.push_str(" ");
+            } else {
+                res.push_str(grapheme);
+            }
         }
         res
     }
 
     pub fn len(&self) -> usize {
-        self.string[..].graphemes(true).count()
+       self.len
     }
 
     pub fn is_empty(&self) -> bool {
-        self.string.is_empty()
+        self.len == 0
     }
 
     fn update_len(&mut self) {
