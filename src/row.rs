@@ -60,4 +60,16 @@ impl Row {
         }
         self.update_len();
     }
+
+    pub fn delete(&mut self, pos: usize) {
+        if pos >= self.len {
+            return;
+        } else {
+            let mut res: String = self.string[..].graphemes(true).take(pos).collect();
+            let remainder: String = self.string[..].graphemes(true).skip(pos + 1).collect();
+            res.push_str(&remainder);
+            self.string = res;
+        }
+        self.update_len();
+    }
 }

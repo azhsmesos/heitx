@@ -84,6 +84,7 @@ impl Editor {
                 self.document.insert(&self.cursor_position, c);
                 self.move_cursor(Key::Right);
             },
+            Key::Delete => self.document.delete(&self.cursor_position),
             Key::Up
             | Key::Down
             | Key::Left
@@ -106,8 +107,8 @@ impl Editor {
             println!("heitx terminal exit...\r");
         } else {
             self.draw_rows();
-            self.draw_status_bg_color();
-            self.draw_message_bg_color();
+            self.draw_status_bar();
+            self.draw_message_bar();
             Terminal::cursor_position(&Position {
                 x: self.cursor_position.x.saturating_sub(self.offset.x),
                 y: self.cursor_position.y.saturating_sub(self.offset.y),
@@ -127,7 +128,7 @@ impl Editor {
         }
     }
 
-    fn draw_status_bg_color(&self) {
+    fn draw_status_bar(&self) {
         let mut status;
         let width = self.terminal.size().width as usize;
         let mut filename = "[No Name]".to_string();
@@ -147,10 +148,6 @@ impl Editor {
         println!("{}\r", status);
         Terminal::reset_fg_color();
         Terminal::reset_bg_color();
-    }
-
-    fn draw_message_bg_color(&self) {
-        Terminal::clear_current_line();
     }
 
     fn draw_rows(&self) {

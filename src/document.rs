@@ -32,6 +32,7 @@ impl Document {
         self.rows.len()
     }
 
+    // simple insert
     pub fn insert(&mut self, position: &Position, c: char) {
         if position.y == self.len() {
             let mut row = Row::default();
@@ -41,5 +42,14 @@ impl Document {
             let row = self.rows.get_mut(position.y).unwrap();
             row.insert(position.x, c);
         }
+    }
+
+    // simple delete
+    pub fn delete(&mut self, pos: &Position) {
+        if pos.y >= self.len() {
+            return;
+        }
+        let row = self.rows.get_mut(pos.y).unwrap();
+        row.delete(pos.x);
     }
 }
