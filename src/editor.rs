@@ -80,16 +80,7 @@ impl Editor {
         let press = Terminal::read_key()?;
         match press {
             Key::Ctrl('c') => self.should_quit = true,
-            Key::Ctrl('s') => {
-                if self.document.filename.is_none() {
-                    self.document.filename = Some(self.prompt("save as: ")?);
-                }
-                if self.document.save_to_disk().is_ok() {
-                    self.status_message = StatusMessage::from("file saved successfully.".to_string());
-                } else {
-                    self.status_message = StatusMessage::from("Error writing file!".to_string());
-                }
-            },
+            Key::Ctrl('s') => self.save(),
             Key::Char(c) => {
                 self.document.insert(&self.cursor_position, c);
                 self.move_cursor(Key::Right);
@@ -115,22 +106,51 @@ impl Editor {
         Ok(())
     }
 
-    fn prompt(&mut self, prompt: &str) -> Result<String, std::io::Error> {
+    fn save(&mut self) {
+        if self.document.filename.is_none() {
+            let new_filename = self.prompt("save as: ").unwrap_or(None);
+            if new_filename.is_none() {
+                self.status_message = StatusMessage::from("save aborted.".to_string());
+                return;
+            }
+            self.document.filename = new_filename;
+        }
+        if self.document.save_to_disk().is_ok() {
+            self.status_message = StatusMessage::from("file saved to successfully.".to_string());
+        } else {
+            self.status_message = StatusMessage::from("error writing to file!".to_string());
+        }
+    }
+
+    fn prompt(&mut self, prompt: &str) -> Result<Option<String>, std::io::Error> {
         let mut res = String::new();
         loop {
             self.status_message = StatusMessage::from(format!("{}{}", prompt, res));
             self.refresh_screen()?;
-            if let Key::Char(c) = Terminal::read_key()? {
-                if c == '\n' {
-                    self.status_message = StatusMessage::from(String::new());
+            match Terminal::read_key()? {
+                Key::Backspace => {
+                    if !res.is_empty() {
+                        res.truncate(res.len() - 1);
+                    }
+                }
+                Key::Char('\n') => break,
+                Key::Char(c) => {
+                    if !c.is_control() {
+                        res.push(c);
+                    }
+                },
+                Key::Esc => {
+                    res.truncate(0);
                     break;
                 }
-                if !c.is_control() {
-                    res.push(c);
-                }
+                _ => (),
             }
         }
-        Ok(res)
+        self.status_message = StatusMessage::from(String::new());
+        if res.is_empty() {
+            return Ok(None);
+        }
+        Ok(Some(res))
     }
 
     fn refresh_screen(&self) -> Result<(), std::io::Error> {
