@@ -2,14 +2,18 @@ use std::cmp;
 use unicode_segmentation::UnicodeSegmentation;
 
 pub struct Row {
-    string: String
+    string: String,
+    len: usize,
 }
 
 impl From<&str> for Row {
     fn from(slice: &str) -> Self {
-        Self {
-            string: String::from(slice)
-        }
+        let mut row = Self {
+            string: String::from(slice),
+            len: 0,
+        };
+        row.update_len();
+        row
     }
 }
 
@@ -33,5 +37,9 @@ impl Row {
 
     pub fn is_empty(&self) -> bool {
         self.string.is_empty()
+    }
+
+    fn update_len(&mut self) {
+        self.len = self.string[..].graphemes(true).count();
     }
 }
