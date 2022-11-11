@@ -81,6 +81,9 @@ impl Editor {
         match press {
             Key::Ctrl('c') => self.should_quit = true,
             Key::Ctrl('s') => {
+                if self.document.filename.is_none() {
+                    self.document.filename = Some(self.prompt("save as: ")?);
+                }
                 if self.document.save_to_disk().is_ok() {
                     self.status_message = StatusMessage::from("file saved successfully.".to_string());
                 } else {
@@ -110,6 +113,24 @@ impl Editor {
         }
         self.scroll();
         Ok(())
+    }
+
+    fn prompt(&mut self, prompt: &str) -> Result<String, std::io::Error> {
+        let mut res = String::new();
+        loop {
+            self.status_message = StatusMessage::from(format!("{}{}", prompt, res));
+            self.refresh_screen()?;
+            if let Key::Char(c) = Terminal::read_key()? {
+                if c == '\n' {
+                    self.status_message = StatusMessage::from(String::new());
+                    break;
+                }
+                if !c.is_control() {
+                    res.push(c);
+                }
+            }
+        }
+        Ok(res)
     }
 
     fn refresh_screen(&self) -> Result<(), std::io::Error> {
