@@ -14,6 +14,7 @@ pub use editor::Position;
 pub use document::Document;
 pub use row::Row;
 pub use editor::SearchDirection;
+pub use filetype::HighlightingOptions;
 
 fn main() {
     Editor::default().run();
