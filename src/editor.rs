@@ -92,7 +92,12 @@ impl Editor {
             },
             Key::Ctrl('s') => self.save(),
             Key::Ctrl('f') => {
-                if let Some(query) = self.prompt("Search: ").unwrap_or(None) {
+                if let Some(query) = self.prompt("Search: ", |editor, _, query| {
+                    if let Some(position) = editor.document.search(&query) {
+                        editor.cursor_position = position;
+                        editor.scroll();
+                    }
+                }).unwrap_or(None) {
                     if let Some(position) = self.document.search(&query[..]) {
                         self.cursor_position = position;
                     } else {
@@ -131,7 +136,7 @@ impl Editor {
 
     fn save(&mut self) {
         if self.document.filename.is_none() {
-            let new_filename = self.prompt("save as: ").unwrap_or(None);
+            let new_filename = self.prompt("save as: ", |_, _, _| {}).unwrap_or(None);
             if new_filename.is_none() {
                 self.status_message = StatusMessage::from("save aborted.".to_string());
                 return;
@@ -145,12 +150,13 @@ impl Editor {
         }
     }
 
-    fn prompt(&mut self, prompt: &str) -> Result<Option<String>, std::io::Error> {
+    fn prompt<C>(&mut self, prompt: &str, callback: C) -> Result<Option<String>, std::io::Error> where C: Fn(&mut Self, Key, &String), {
         let mut res = String::new();
         loop {
             self.status_message = StatusMessage::from(format!("{}{}", prompt, res));
             self.refresh_screen()?;
-            match Terminal::read_key()? {
+            let key = Terminal::read_key()?;
+            match key {
                 Key::Backspace => {
                     if !res.is_empty() {
                         res.truncate(res.len().saturating_sub(1))
@@ -168,6 +174,7 @@ impl Editor {
                 }
                 _ => (),
             }
+            callback(self, key, &res);
         }
         self.status_message = StatusMessage::from(String::new());
         if res.is_empty() {
