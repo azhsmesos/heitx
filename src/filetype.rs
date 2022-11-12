@@ -9,6 +9,7 @@ pub struct HighlightingOptions {
     strings: bool,
     characters: bool,
     comments: bool,
+    multiple_comments: bool,
     primary_keywords: Vec<String>,
     secondary_keywords: Vec<String>,
 }
@@ -36,6 +37,7 @@ impl FileType {
                     strings: true,
                     characters: true,
                     comments: true,
+                    multiple_comments: true,
                     primary_keywords: vec![
                         "as".to_string(),
                         "break".to_string(),
@@ -139,5 +141,9 @@ impl HighlightingOptions {
 
     pub fn secondary_keywords(&self) -> &Vec<String> {
         &self.secondary_keywords
+    }
+
+    pub fn multiple_comments(&self) -> bool {
+        self.multiple_comments
     }
 }
