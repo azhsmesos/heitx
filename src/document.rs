@@ -1,3 +1,4 @@
+
 use crate::{Position, Row, SearchDirection};
 use std::fs;
 use std::io::{Error, Write};
@@ -16,11 +17,8 @@ impl Document {
         let contents = fs::read_to_string(filename)?;
         let mut rows = Vec::new();
         let filetype = FileType::from(filename);
-        let mut start_with_comment = false;
         for value in contents.lines() {
-            let mut row = Row::from(value);
-            start_with_comment = row.highlight(&filetype.highlighting_options(), None, start_with_comment);
-            rows.push(row);
+            rows.push(Row::from(value));
         }
         Ok(Self {
             rows,
@@ -63,7 +61,6 @@ impl Document {
             let row = &mut self.rows[position.y];
             row.insert(position.x, c);
         }
-        self.highlight(None);
     }
 
     // simple delete
@@ -84,11 +81,9 @@ impl Document {
             let next_row = self.rows.remove(pos.y + 1);
             let row = self.rows.get_mut(pos.y).unwrap();
             row.append(&next_row);
-            row.highlight(&self.filetype.highlighting_options(), None, false);
         } else {
             let row = self.rows.get_mut(pos.y).unwrap();
             row.delete(pos.x);
-            row.highlight(&self.filetype.highlighting_options(), None, false);
         }
     }
 
@@ -111,11 +106,9 @@ impl Document {
         if let Some(filename) = &self.filename {
             let mut file = fs::File::create(filename)?;
             self.filetype = FileType::from(filename);
-            let mut start_with_comment = false;
             for row in &mut self.rows {
                 file.write_all(row.as_bytes())?;
                 file.write_all(b"\n")?;
-                start_with_comment = row.highlight(&self.filetype.highlighting_options(), None, start_with_comment);
             }
             self.dirty = false;
         }
@@ -161,9 +154,19 @@ impl Document {
         None
     }
 
-    pub fn highlight(&mut self, word: Option<&str>) {
+    pub fn highlight(&mut self, word: &Option<String>, until: Option<usize>) {
         let mut start_with_comment = false;
-        for row in &mut self.rows {
+        let until = if let Some(until) = until {
+            if until.saturating_add(1) < self.rows.len() {
+                until.saturating_add(1)
+            } else {
+                self.rows.len()
+            }
+        } else {
+            self.rows.len()
+        };
+        #[allow(clippy::indexing_slicing)]
+        for row in &mut self.rows[..until] {
             start_with_comment = row.highlight(&self.filetype.highlighting_options(), word, start_with_comment);
         }
     }

@@ -1,4 +1,4 @@
-extern crate core;
+
 
 #[warn(clippy::all, clippy::pedantic)]
 mod editor;
