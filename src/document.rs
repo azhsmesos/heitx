@@ -37,7 +37,7 @@ impl Document {
 
     // simple insert
     pub fn insert(&mut self, position: &Position, c: char) {
-        if position.y > self.len() {
+        if position.y > self.rows.len() {
             return;
         }
         self.dirty = true;
@@ -45,7 +45,7 @@ impl Document {
             self.insert_newline(position);
             return;
         }
-        if position.y == self.len() {
+        if position.y == self.rows.len() {
             let mut row = Row::default();
             row.insert(0, c);
             self.rows.push(row);
@@ -56,8 +56,9 @@ impl Document {
     }
 
     // simple delete
+    #[allow(clippy::integer_arithmetic)]
     pub fn delete(&mut self, pos: &Position) {
-        if pos.y >= self.len() {
+        if pos.y >= self.rows.len() {
             return;
         }
         self.dirty = true;
@@ -68,7 +69,7 @@ impl Document {
             current line. If this is not the case, we simply t
             ry to delete from the current row.
          */
-        if pos.x == self.rows.get_mut(pos.y).unwrap().len() && pos.y < self.len() - 1 {
+        if pos.x == self.rows.get_mut(pos.y).unwrap().len() && pos.y + 1 < self.len() {
             let next_row = self.rows.remove(pos.y + 1);
             let row = self.rows.get_mut(pos.y).unwrap();
             row.append(&next_row);
@@ -79,12 +80,16 @@ impl Document {
     }
 
     fn insert_newline(&mut self, pos: &Position) {
-        if pos.y == self.len() {
+        if pos.y > self.rows.len() {
+            return;
+        }
+        if pos.y == self.rows.len() {
             self.rows.push(Row::default());
             return;
         }
 
         let new_row = self.rows.get_mut(pos.y).unwrap().split(pos.x);
+        #[allow(clippy::integer_arithmetic)]
         self.rows.insert(pos.y + 1, new_row);
     }
 

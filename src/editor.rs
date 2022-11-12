@@ -6,6 +6,7 @@ use termion::color;
 
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 const STATUS_FG_COLOR: color::LightBlack = color::LightBlack;
+const QUIT_COUNT: u8 = 2;
 
 pub struct Editor {
     should_quit: bool,
@@ -14,6 +15,7 @@ pub struct Editor {
     document: Document,
     offset: Position,
     status_message: StatusMessage,
+    quit_count: u8,
 }
 
 #[derive(Default)]
@@ -54,11 +56,10 @@ impl Editor {
     pub fn default() -> Self {
         let args: Vec<String> = env::args().collect();
         let mut initial_status = String::from("HELP: Ctrl-c = quit | Ctrl-s = save");
-        let document = if args.len() > 1 {
-            let filename = &args[1];
-            let doc = Document::open(&filename);
-            if doc.is_ok() {
-                doc.unwrap()
+        let document = if let Some(filename) = args.get(1) {
+            let doc = Document::open(filename);
+            if let Ok(doc) = doc{
+                doc
             } else {
                 initial_status = format!("ERR: could not open file {}", filename);
                 Document::default()
@@ -73,13 +74,22 @@ impl Editor {
             document,
             offset: Position::default(),
             status_message: StatusMessage::from(initial_status),
+            quit_count: QUIT_COUNT,
         }
     }
 
     fn process_key(&mut self) -> Result<(), std::io::Error> {
         let press = Terminal::read_key()?;
         match press {
-            Key::Ctrl('c') => self.should_quit = true,
+            Key::Ctrl('c') => {
+                if self.quit_count > 0 && self.document.is_dirty() {
+                    self.status_message = StatusMessage::from(
+                    format!("WARING! file has unsaved changes, press Ctrl-s {} more count to quit.", self.quit_count));
+                    self.quit_count -= 1;
+                    return Ok(());
+                }
+                self.should_quit = true
+            },
             Key::Ctrl('s') => self.save(),
             Key::Char(c) => {
                 self.document.insert(&self.cursor_position, c);
@@ -103,6 +113,10 @@ impl Editor {
             _ => (),
         }
         self.scroll();
+        if self.quit_count < QUIT_COUNT {
+            self.quit_count = QUIT_COUNT;
+            self.status_message = StatusMessage::from(String::new());
+        }
         Ok(())
     }
 
@@ -130,7 +144,7 @@ impl Editor {
             match Terminal::read_key()? {
                 Key::Backspace => {
                     if !res.is_empty() {
-                        res.truncate(res.len() - 1);
+                        res.truncate(res.len().saturating_sub(1))
                     }
                 }
                 Key::Char('\n') => break,
@@ -199,7 +213,7 @@ impl Editor {
         let line_indict = format!("{}/{}", self.cursor_position.y.saturating_add(1), self.document.len());
         let len = status.len() + line_indict.len();
         if width > len {
-            status.push_str(&" ".repeat(width - len));
+            status.push_str(&" ".repeat(width.saturating_sub(len)));
         }
         status = format!("{}{}", status, line_indict);
         status.truncate(width);
@@ -213,20 +227,20 @@ impl Editor {
         let height = self.terminal.size().height;
         for terminal_row in 0..height {
             Terminal::clear_current_line();
-            if let Some(row) = self.document.row(terminal_row as usize + self.offset.y) {
+            if let Some(row) = self.document.row(self.offset.y.saturating_add(terminal_row as usize)) {
                 self.draw_row(row);
             } else if self.document.is_empty() && terminal_row == height / 3 {
                 self.draw_welcome_info();
             } else {
                 println!("~\r");
             };
-        };
+        }
     }
 
     pub fn draw_row(&self, row: &Row) {
         let width = self.terminal.size().width as usize;
         let start = self.offset.x;
-        let end = self.offset.x + width;
+        let end = self.offset.x.saturating_add(width);
         let row = row.render(start, end);
         println!("{}\r", row);
     }
@@ -272,14 +286,14 @@ impl Editor {
             // scrolling with pageUp and pageDown
             Key::PageUp => {
                 y = if y > terminal_height {
-                    y - terminal_height
+                    y.saturating_sub(terminal_height)
                 } else {
                     0
                 }
             },
             Key::PageDown => {
                 y = if y.saturating_add(terminal_height) < height {
-                    y + terminal_height as usize
+                    y.saturating_add(terminal_height)
                 } else {
                     height
                 }
@@ -320,6 +334,7 @@ impl Editor {
         let mut welcome_message = format!("heitx editor --version {}", VERSION);
         let width = self.terminal.size().width as usize;
         let len = welcome_message.len();
+        #[allow(clippy::integer_arithmetic, clippy::integer_division)]
         let padding = width.saturating_sub(len) / 2;
         let spaces = " ".repeat(padding.saturating_sub(1));
         welcome_message = format!("~{}{}", spaces, welcome_message);
