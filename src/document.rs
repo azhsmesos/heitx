@@ -6,6 +6,7 @@ use std::io::{Error, Write};
 pub struct Document {
     rows: Vec<Row>,
     pub filename: Option<String>,
+    dirty: bool,
 }
 
 impl Document {
@@ -18,6 +19,7 @@ impl Document {
         Ok(Self {
             rows,
             filename: Some(filename.to_string()),
+            dirty: false,
         })
     }
 
@@ -35,6 +37,10 @@ impl Document {
 
     // simple insert
     pub fn insert(&mut self, position: &Position, c: char) {
+        if position.y > self.len() {
+            return;
+        }
+        self.dirty = true;
         if c == '\n' {
             self.insert_newline(position);
             return;
@@ -43,7 +49,7 @@ impl Document {
             let mut row = Row::default();
             row.insert(0, c);
             self.rows.push(row);
-        } else if position.y < self.len() {
+        } else  {
             let row = self.rows.get_mut(position.y).unwrap();
             row.insert(position.x, c);
         }
@@ -54,6 +60,7 @@ impl Document {
         if pos.y >= self.len() {
             return;
         }
+        self.dirty = true;
         /*
             What it does is check if we are at the end of a line,
             and if there is a line after that line. If this is the case,
@@ -72,9 +79,6 @@ impl Document {
     }
 
     fn insert_newline(&mut self, pos: &Position) {
-        if pos.y > self.len() {
-            return;
-        }
         if pos.y == self.len() {
             self.rows.push(Row::default());
             return;
@@ -84,14 +88,19 @@ impl Document {
         self.rows.insert(pos.y + 1, new_row);
     }
 
-    pub fn save_to_disk(&self) -> Result<(), Error> {
+    pub fn save_to_disk(&mut self) -> Result<(), Error> {
         if let Some(filename) = &self.filename {
             let mut file = fs::File::create(filename)?;
             for row in &self.rows {
                 file.write_all(row.as_bytes())?;
                 file.write_all(b"\n")?;
             }
+            self.dirty = true;
         }
         Ok(())
+    }
+
+    pub fn is_dirty(&self) -> bool {
+        self.dirty
     }
 }
