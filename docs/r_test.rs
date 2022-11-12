@@ -1,4 +1,4 @@
-11 pub struct A {
+ pub struct A {
     string: String,
 }
 // frust this is 注视
