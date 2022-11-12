@@ -6,6 +6,7 @@ use termion::color;
 
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 const STATUS_FG_COLOR: color::LightBlack = color::LightBlack;
+const STATUS_BG_COLOR: color::LightCyan = color::LightCyan;
 const QUIT_COUNT: u8 = 2;
 
 pub struct Editor {
@@ -226,6 +227,7 @@ impl Editor {
         }
         status = format!("{}{}", status, line_indict);
         status.truncate(width);
+        Terminal::set_bg_color(STATUS_BG_COLOR);
         Terminal::set_fg_color(STATUS_FG_COLOR);
         println!("{}\r", status);
         Terminal::reset_fg_color();

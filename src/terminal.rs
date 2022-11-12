@@ -69,7 +69,7 @@ impl Terminal {
         print!("{}", termion::clear::CurrentLine);
     }
 
-    pub fn set_bg_color(color: color::LightWhite) {
+    pub fn set_bg_color(color: color::LightCyan) {
         print!("{}", color::Bg(color));
     }
 

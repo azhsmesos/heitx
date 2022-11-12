@@ -1,4 +1,6 @@
 use std::cmp;
+use std::fmt::format;
+use termion::color;
 use unicode_segmentation::UnicodeSegmentation;
 use crate::SearchDirection;
 
@@ -27,10 +29,14 @@ impl Row {
             .graphemes(true)
             .skip(start)
             .take(end - start) {
-            if grapheme == "\t" {
-                res.push_str(" ");
-            } else {
-                res.push_str(grapheme);
+            if let Some(c) = grapheme.chars().next() {
+                if c == '\t' {
+                    res.push_str(" ");
+                } else if c.is_ascii_digit() {
+                    res.push_str(&format!("{}{}{}", termion::color::Fg(color::Rgb(220, 163, 163)), c, color::Fg(color::Reset))[..]);
+                } else {
+                    res.push(c);
+                }
             }
         }
         res
