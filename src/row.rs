@@ -198,7 +198,7 @@ impl Row {
                 &highlighting::Type::None
             };
 
-            if opts.numbers {
+            if opts.numbers() {
                 if (c.is_ascii_digit() && (prev_is_separator || previous_high == &highlighting::Type::Number))
                     || (c == &'.' && previous_high == &highlighting::Type::Number) {
                     highlighting.push(highlighting::Type::Number);
