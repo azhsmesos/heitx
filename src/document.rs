@@ -1,4 +1,4 @@
-use crate::{Position, Row};
+use crate::{Position, Row, SearchDirection};
 use std::fs;
 use std::io::{Error, Write};
 
@@ -109,13 +109,37 @@ impl Document {
         self.dirty
     }
 
-    pub fn search(&self, query: &str, after: &Position) -> Option<Position> {
-        let mut x = after.x;
-        for (y, row) in self.rows.iter().enumerate().skip(after.y) {
-            if let Some(x) = row.search(query, x) {
-                return Some(Position { x, y });
+    pub fn search(&self, query: &str, after: &Position, direction: SearchDirection) -> Option<Position> {
+        if after.y >= self.rows.len() {
+            return None;
+        }
+        let mut position = Position { x: after.x, y: after.y };
+        let start = if direction == SearchDirection::Forward {
+            after.y
+        } else {
+            0
+        };
+        let end = if direction == SearchDirection::Forward {
+            self.rows.len()
+        } else {
+            after.y.saturating_add(1)
+        };
+        for _ in start..end {
+            if let Some(row) = self.rows.get(position.y) {
+                if let Some(x) = row.search(&query, position.x, direction) {
+                    position.x = x;
+                    return Some(position);
+                }
+                if direction == SearchDirection::Forward {
+                    position.y = position.y.saturating_add(1);
+                    position.x = 0;
+                } else {
+                    position.y = position.y.saturating_sub(1);
+                    position.x = self.rows[position.y].len();
+                }
+            } else {
+                return None;
             }
-            x = 0;
         }
         None
     }
