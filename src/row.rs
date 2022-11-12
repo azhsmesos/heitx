@@ -199,6 +199,29 @@ impl Row {
                 &highlighting::Type::None
             };
 
+            if opts.characters() && !in_string && *c == '\'' {
+                prev_is_separator = true;
+                if let Some(next_char) = chars.get(index.saturating_add(1)) {
+                    let closing_index = if *next_char == '\\' {
+                        index.saturating_add(3)
+                    } else {
+                        index.saturating_add(2)
+                    };
+                    if let Some(close_char) = chars.get(closing_index) {
+                        if *close_char == '\'' {
+                            for _ in 0..=closing_index.saturating_sub(index) {
+                                highlighting.push(highlighting::Type::Character);
+                                index += 1;
+                            }
+                            continue;
+                        }
+                    }
+                }
+                highlighting.push(highlighting::Type::None);
+                index += 1;
+                continue;
+            }
+
             if opts.strings() {
                 if in_string {
                     highlighting.push(highlighting::Type::String);
@@ -221,6 +244,17 @@ impl Row {
                     prev_is_separator = true;
                     index += 1;
                     continue;
+                }
+            }
+
+            if opts.comments() && *c == '/' {
+                if let Some(next_char) = chars.get(index.saturating_add(1)) {
+                    if *next_char == '/' {
+                        for _ in index..chars.len() {
+                            highlighting.push(highlighting::Type::Comment);
+                        }
+                        break;
+                    }
                 }
             }
 
