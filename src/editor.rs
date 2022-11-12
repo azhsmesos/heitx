@@ -189,7 +189,7 @@ impl Editor {
             self.document.highlight(&self.highlighted_word,
                                     Some(self.offset.y.saturating_add(self.terminal.size().height as usize)));
             self.draw_rows();
-            self.draw_status_bar();
+            self.draw_status_view();
             self.draw_message_bar();
             Terminal::cursor_position(&Position {
                 x: self.cursor_position.x.saturating_sub(self.offset.x),
@@ -210,7 +210,7 @@ impl Editor {
         }
     }
 
-    fn draw_status_bar(&self) {
+    fn draw_status_view(&self) {
         let mut status;
         let width = self.terminal.size().width as usize;
         let mod_indicator = if self.document.is_dirty() {
