@@ -6,6 +6,7 @@ mod terminal;
 mod document;
 mod row;
 mod highlighting;
+mod filetype;
 
 use editor::Editor;
 pub use terminal::Terminal;

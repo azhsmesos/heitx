@@ -1,12 +1,14 @@
 use crate::{Position, Row, SearchDirection};
 use std::fs;
 use std::io::{Error, Write};
+use crate::filetype::FileType;
 
 #[derive(Default)]
 pub struct Document {
     rows: Vec<Row>,
     pub filename: Option<String>,
     dirty: bool,
+    filetype: FileType,
 }
 
 impl Document {
@@ -22,7 +24,12 @@ impl Document {
             rows,
             filename: Some(filename.to_string()),
             dirty: false,
+            filetype: FileType::from(filename),
         })
+    }
+
+    pub fn filetype(&self) -> String {
+        self.filetype.name()
     }
 
     pub fn row(&self, index: usize) -> Option<&Row> {

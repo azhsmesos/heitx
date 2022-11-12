@@ -220,7 +220,11 @@ impl Editor {
             filename.truncate(20);
         }
         status = format!("{} - {} lines{}", filename, self.document.len(), mod_indicator);
-        let line_indict = format!("{}/{}", self.cursor_position.y.saturating_add(1), self.document.len());
+        let line_indict = format!(
+            "{} | {}/{}",
+            self.document.filetype(),
+            self.cursor_position.y.saturating_add(1),
+            self.document.len());
         let len = status.len() + line_indict.len();
         if width > len {
             status.push_str(&" ".repeat(width.saturating_sub(len)));

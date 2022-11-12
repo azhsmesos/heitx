@@ -1,5 +1,4 @@
 use std::cmp;
-use std::mem::transmute;
 use termion::color;
 use unicode_segmentation::UnicodeSegmentation;
 use crate::SearchDirection;
@@ -39,7 +38,7 @@ impl Row {
                 if highlighting_type != current_highlighting {
                     current_highlighting = highlighting_type;
                     let start_highlight = format!("{}", termion::color::Fg(highlighting_type.to_color()));
-                    res.push_str(&start_highlight);
+                    res.push_str(&start_highlight[..]);
                 }
                 if c == '\t' {
                     res.push_str(" ");
