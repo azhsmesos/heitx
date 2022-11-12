@@ -14,7 +14,9 @@ impl Document {
         let contents = fs::read_to_string(filename)?;
         let mut rows = Vec::new();
         for value in contents.lines() {
-            rows.push(Row::from(value));
+            let mut row = Row::from(value);
+            row.highlight();
+            rows.push(row);
         }
         Ok(Self {
             rows,
@@ -48,10 +50,13 @@ impl Document {
         if position.y == self.rows.len() {
             let mut row = Row::default();
             row.insert(0, c);
+            row.highlight();
             self.rows.push(row);
         } else  {
+            #[allow(clippy::indexing_slicing)]
             let row = self.rows.get_mut(position.y).unwrap();
             row.insert(position.x, c);
+            row.highlight();
         }
     }
 
@@ -73,9 +78,11 @@ impl Document {
             let next_row = self.rows.remove(pos.y + 1);
             let row = self.rows.get_mut(pos.y).unwrap();
             row.append(&next_row);
+            row.highlight();
         } else {
             let row = self.rows.get_mut(pos.y).unwrap();
             row.delete(pos.x);
+            row.highlight();
         }
     }
 
@@ -87,8 +94,11 @@ impl Document {
             self.rows.push(Row::default());
             return;
         }
-
-        let new_row = self.rows.get_mut(pos.y).unwrap().split(pos.x);
+        #[allow(clippy::indexing_slicing)]
+            let current_row = &mut self.rows[pos.y];
+        let mut new_row = current_row.split(pos.x);
+        current_row.highlight();
+        new_row.highlight();
         #[allow(clippy::integer_arithmetic)]
         self.rows.insert(pos.y + 1, new_row);
     }

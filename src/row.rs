@@ -3,10 +3,12 @@ use std::fmt::format;
 use termion::color;
 use unicode_segmentation::UnicodeSegmentation;
 use crate::SearchDirection;
+use crate::highlighting;
 
 #[derive(Default)]
 pub struct Row {
     string: String,
+    highlighting: Vec<highlighting::Type>,
     len: usize,
 }
 
@@ -14,6 +16,7 @@ impl From<&str> for Row {
     fn from(slice: &str) -> Self {
         Self {
             string: String::from(slice),
+            highlighting: Vec::new(),
             len: slice.graphemes(true).count(),
         }
     }
@@ -25,18 +28,22 @@ impl Row {
         let start = cmp::min(start, end);
         let mut res = String::new();
         #[allow(clippy::integer_arithmetic)]
-        for grapheme in self.string[..]
+        for (index, grapheme) in self.string[..]
             .graphemes(true)
+            .enumerate()
             .skip(start)
             .take(end - start) {
             if let Some(c) = grapheme.chars().next() {
+                let highlighting_type = self.highlighting.get(index).unwrap_or(&highlighting::Type::None);
+                let start_highlight = format!("{}", termion::color::Fg(highlighting_type.to_color()));
+                res.push_str(&start_highlight[..]);
                 if c == '\t' {
                     res.push_str(" ");
-                } else if c.is_ascii_digit() {
-                    res.push_str(&format!("{}{}{}", termion::color::Fg(color::Rgb(220, 163, 163)), c, color::Fg(color::Reset))[..]);
                 } else {
                     res.push(c);
                 }
+                let end_highlight = format!("{}", termion::color::Fg(color::Reset));
+                res.push_str(&end_highlight[..]);
             }
         }
         res
@@ -111,6 +118,7 @@ impl Row {
         self.len = len;
         Self {
             string: split_row,
+            highlighting: Vec::new(),
             len: split_len,
         }
     }
@@ -151,5 +159,17 @@ impl Row {
            }
         }
         None
+    }
+
+    pub fn highlight(&mut self) {
+        let mut highlighting = Vec::new();
+        for c in self.string.chars() {
+            if c.is_ascii_digit() {
+                highlighting.push(highlighting::Type::Number);
+            } else {
+                highlighting.push(highlighting::Type::None);
+            }
+        }
+        self.highlighting = highlighting;
     }
 }
