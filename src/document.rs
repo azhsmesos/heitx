@@ -15,7 +15,7 @@ impl Document {
         let mut rows = Vec::new();
         for value in contents.lines() {
             let mut row = Row::from(value);
-            row.highlight();
+            row.highlight(None);
             rows.push(row);
         }
         Ok(Self {
@@ -50,13 +50,13 @@ impl Document {
         if position.y == self.rows.len() {
             let mut row = Row::default();
             row.insert(0, c);
-            row.highlight();
+            row.highlight(None);
             self.rows.push(row);
         } else  {
             #[allow(clippy::indexing_slicing)]
             let row = self.rows.get_mut(position.y).unwrap();
             row.insert(position.x, c);
-            row.highlight();
+            row.highlight(None);
         }
     }
 
@@ -78,11 +78,11 @@ impl Document {
             let next_row = self.rows.remove(pos.y + 1);
             let row = self.rows.get_mut(pos.y).unwrap();
             row.append(&next_row);
-            row.highlight();
+            row.highlight(None);
         } else {
             let row = self.rows.get_mut(pos.y).unwrap();
             row.delete(pos.x);
-            row.highlight();
+            row.highlight(None);
         }
     }
 
@@ -95,10 +95,10 @@ impl Document {
             return;
         }
         #[allow(clippy::indexing_slicing)]
-            let current_row = &mut self.rows[pos.y];
+        let current_row = &mut self.rows[pos.y];
         let mut new_row = current_row.split(pos.x);
-        current_row.highlight();
-        new_row.highlight();
+        current_row.highlight(None);
+        new_row.highlight(None);
         #[allow(clippy::integer_arithmetic)]
         self.rows.insert(pos.y + 1, new_row);
     }
@@ -152,5 +152,11 @@ impl Document {
             }
         }
         None
+    }
+
+    pub fn highlight(&mut self, word: Option<&str>) {
+        for row in &mut self.rows {
+            row.highlight(word);
+        }
     }
 }

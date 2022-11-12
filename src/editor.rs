@@ -372,11 +372,13 @@ impl Editor {
             } else if moved {
                 editor.move_cursor(Key::Left);
             }
+            editor.document.highlight(Some(query));
         },).unwrap_or(None);
         if query.is_none() {
             self.cursor_position = old_position;
             self.scroll();
         }
+        self.document.highlight(None);
     }
 }
 
