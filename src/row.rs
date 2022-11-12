@@ -1,5 +1,4 @@
 use std::cmp;
-use std::fmt::format;
 use termion::color;
 use unicode_segmentation::UnicodeSegmentation;
 use crate::SearchDirection;
@@ -27,6 +26,7 @@ impl Row {
         let end = cmp::min(end, self.string.len());
         let start = cmp::min(start, end);
         let mut res = String::new();
+        let mut current_highlighting = &highlighting::Type::None;
         #[allow(clippy::integer_arithmetic)]
         for (index, grapheme) in self.string[..]
             .graphemes(true)
@@ -35,17 +35,20 @@ impl Row {
             .take(end - start) {
             if let Some(c) = grapheme.chars().next() {
                 let highlighting_type = self.highlighting.get(index).unwrap_or(&highlighting::Type::None);
-                let start_highlight = format!("{}", termion::color::Fg(highlighting_type.to_color()));
-                res.push_str(&start_highlight[..]);
+                if highlighting_type != current_highlighting {
+                    current_highlighting = highlighting_type;
+                    let start_highlight = format!("{}", termion::color::Fg(highlighting_type.to_color()));
+                    res.push_str(&start_highlight);
+                }
                 if c == '\t' {
                     res.push_str(" ");
                 } else {
                     res.push(c);
                 }
-                let end_highlight = format!("{}", termion::color::Fg(color::Reset));
-                res.push_str(&end_highlight[..]);
             }
         }
+        let end_highlight = format!("{}", termion::color::Fg(color::Reset));
+        res.push_str(&end_highlight[..]);
         res
     }
 
