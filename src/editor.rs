@@ -18,7 +18,7 @@ pub struct Editor {
     quit_count: u8,
 }
 
-#[derive(Default)]
+#[derive(Default, Clone)]
 pub struct Position {
     pub x: usize,
     pub y: usize,
@@ -91,20 +91,7 @@ impl Editor {
                 self.should_quit = true
             },
             Key::Ctrl('s') => self.save(),
-            Key::Ctrl('f') => {
-                if let Some(query) = self.prompt("Search: ", |editor, _, query| {
-                    if let Some(position) = editor.document.search(&query) {
-                        editor.cursor_position = position;
-                        editor.scroll();
-                    }
-                }).unwrap_or(None) {
-                    if let Some(position) = self.document.search(&query[..]) {
-                        self.cursor_position = position;
-                    } else {
-                        self.status_message = StatusMessage::from(format!("Not found: {}", query));
-                    }
-                }
-            },
+            Key::Ctrl('f') => self.search(),
             Key::Char(c) => {
                 self.document.insert(&self.cursor_position, c);
                 self.move_cursor(Key::Right);
@@ -356,6 +343,25 @@ impl Editor {
         welcome_message = format!("~{}{}", spaces, welcome_message);
         welcome_message.truncate(width);
         println!("{}\r", welcome_message);
+    }
+
+    fn search(&mut self) {
+        let old_position = self.cursor_position.clone();
+        if let Some(query) = self.prompt("Search: ", |editor, _, query| {
+            if let Some(position) = editor.document.search(&query) {
+                editor.cursor_position = position;
+                editor.scroll();
+            }
+        }).unwrap_or(None) {
+            if let Some(position) = self.document.search(&query[..]) {
+                self.cursor_position = position;
+            } else {
+                self.status_message = StatusMessage::from(format!("not found: {}", query));
+            }
+        } else {
+            self.cursor_position = old_position;
+            self.scroll();
+        }
     }
 }
 
